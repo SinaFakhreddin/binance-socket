@@ -1,23 +1,41 @@
-import logo from './logo.svg';
-import './App.css';
+import MyComp from "./MyComp";
+import "./App.css";
+import { useEffect, useRef, useState } from "react";
 
 function App() {
+  const SOCKET_URL = "wss://fstream.binance.com/stream";
+  const [data, setData] = useState([]);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    ref.current?.scrollIntoView({ behavior: "smooth" });
+  }, [data]);
+
+  useEffect(() => {
+    const socket = new WebSocket(SOCKET_URL);
+
+    socket.onopen = () => {
+      console.log("socket is open");
+      const request = {
+        method: "SUBSCRIBE",
+        params: ["!ticker@arr"],
+      };
+      socket.send(JSON.stringify(request));
+    };
+    socket.onmessage = (data) => {
+      setData(JSON.parse(data.data));
+    };
+  }, []);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <div className={"wrapper"}>
+        {data.data?.map((data) => {
+          console.log("fucking Data", data);
+          return <MyComp s={data?.s} P={data?.P} c={data?.c} C={data?.C} />;
+        })}
+        <div style={{ background: "white", width: "100%" }} ref={ref} />
+      </div>
     </div>
   );
 }
